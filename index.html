@@ -20,39 +20,51 @@
 <body>
   <div id="map"></div>
 
-  <script>
-    const map = L.map('map').setView([53.75, -0.35], 12);
+ <script>
+  const map = L.map('map').setView([53.75, -0.35], 12);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
 
-    const palette = [
-      '#edf8fb', '#b2e2e2', '#66c2a4', '#2ca25f', '#006d2c',
-      '#f7fcf5', '#e5f5e0', '#c7e9c0', '#a1d99b', '#74c476',
-      '#31a354', '#006d2c', '#fff7ec', '#fee8c8', '#fdd49e',
-      '#fdbb84', '#fc8d59', '#ef6548', '#d7301f', '#990000',
-      '#d0d1e6', '#a6bddb', '#74a9cf', '#2b8cbe', '#045a8d', '#023858'
-    ];
+  const palette = [
+    '#edf8fb', '#b2e2e2', '#66c2a4', '#2ca25f', '#006d2c',
+    '#f7fcf5', '#e5f5e0', '#c7e9c0', '#a1d99b', '#74c476',
+    '#31a354', '#006d2c', '#fff7ec', '#fee8c8', '#fdd49e',
+    '#fdbb84', '#fc8d59', '#ef6548', '#d7301f', '#990000',
+    '#d0d1e6', '#a6bddb', '#74a9cf', '#2b8cbe', '#045a8d', '#023858'
+  ];
 
-    const getColor = seg => palette[(seg - 1) % palette.length];
+  const getColor = seg => palette[(seg - 1) % palette.length];
 
-    fetch('Hull_OAs.geojson')
-      .then(res => res.json())
-      .then(data => {
-        L.geoJSON(data, {
-          style: feature => ({
+  fetch('Hull_OAs.geojson')
+    .then(res => res.json())
+    .then(data => {
+      // Automatically detect the segment field
+      const firstProps = data.features[0].properties;
+      const segmentField = Object.keys(firstProps).find(k =>
+        k.toLowerCase().includes('segment')
+      );
+
+      L.geoJSON(data, {
+        style: feature => {
+          const seg = feature.properties[segmentField];
+          return {
             color: '#333',
             weight: 0.5,
-             fillColor: getColor(feature.properties["Segments 1-26.xlsx - Sheet 1_segment"] || 1),
+            fillColor: getColor(seg || 1),
             fillOpacity: 0.8
-          }),
-          onEachFeature: (feature, layer) => {
-           const seg = feature.properties["Segments 1-26.xlsx - Sheet 1_segment"] || '–';
-            layer.bindPopup(`<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`);
-          }
-        }).addTo(map);
-      });
-  </script>
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          const seg = feature.properties[segmentField] || '–';
+          layer.bindPopup(
+            `<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`
+          );
+        }
+      }).addTo(map);
+    });
+</script>
+
 </body>
 </html>

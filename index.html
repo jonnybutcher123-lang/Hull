@@ -44,11 +44,11 @@
           style: feature => ({
             color: '#333',
             weight: 0.5,
-            fillColor: getColor(feature.properties.segment || 1),
+             fillColor: getColor(feature.properties["Segments 1-26.xlsx - Sheet 1_segment"] || 1),
             fillOpacity: 0.8
           }),
           onEachFeature: (feature, layer) => {
-            const seg = feature.properties.segment || '–';
+           const seg = feature.properties["Segments 1-26.xlsx - Sheet 1_segment"] || '–';
             layer.bindPopup(`<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`);
           }
         }).addTo(map);

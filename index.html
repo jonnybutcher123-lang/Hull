@@ -27,21 +27,41 @@
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
+  const palette = [
+    '#edf8fb', '#b2e2e2', '#66c2a4', '#2ca25f', '#006d2c',
+    '#f7fcf5', '#e5f5e0', '#c7e9c0', '#a1d99b', '#74c476',
+    '#31a354', '#006d2c', '#fff7ec', '#fee8c8', '#fdd49e',
+    '#fdbb84', '#fc8d59', '#ef6548', '#d7301f', '#990000',
+    '#d0d1e6', '#a6bddb', '#74a9cf', '#2b8cbe', '#045a8d', '#023858'
+  ];
+
+  const getColor = seg => palette[(parseInt(seg) - 1) % palette.length];
+
   fetch('Hull_OAs.geojson')
     .then(res => res.json())
     .then(data => {
-      const firstProps = data.features[0].properties;
-      console.log('🔍 Properties in first feature:', firstProps);
-
-      alert('First property keys: ' + Object.keys(firstProps).join(', '));
+      const field = "Segments 1-26.xlsx - Sheet 1_segment";
 
       L.geoJSON(data, {
-        color: '#333',
-        weight: 0.5,
-        fillOpacity: 0.4
+        style: feature => {
+          const seg = feature.properties[field];
+          return {
+            color: '#444',
+            weight: 0.5,
+            fillColor: getColor(seg || 1),
+            fillOpacity: 0.8
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          const seg = feature.properties[field] || '–';
+          layer.bindPopup(
+            `<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`
+          );
+        }
       }).addTo(map);
     });
 </script>
+
 
 
 </body>

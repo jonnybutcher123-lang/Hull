@@ -95,7 +95,7 @@
             color: '#444',
             weight: 0.4,
             fillColor: getColor(seg),
-            fillOpacity: 0.5
+            fillOpacity: 1.0   // 100% opacity when loaded
           };
         },
         onEachFeature: (feature, layer) => {
@@ -115,7 +115,7 @@
         const div = L.DomUtil.create('div', 'opacity-slider');
         div.innerHTML = `
           <label style="font-family:sans-serif;font-size:12px;">
-            Opacity: <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="0.5">
+            Opacity: <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="1">
           </label>
         `;
         return div;

@@ -23,13 +23,17 @@
 <script>
   const map = L.map('map').setView([53.75, -0.35], 12);
 
-  // Base map layer
-  const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // --- Base maps ---
+  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Segment colour categories
-  function getColor(seg) {
+  const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap & Carto'
+  });
+
+  // --- Segment Colour Function ---
+  const getColor = seg => {
     if (seg >= 1 && seg <= 5) return '#2b8cbe';      // Blue
     if (seg >= 6 && seg <= 10) return '#9467bd';     // Purple
     if (seg >= 11 && seg <= 14) return '#de2d26';    // Red
@@ -37,9 +41,9 @@
     if (seg >= 17 && seg <= 21) return '#ffffb2';    // Yellow/Light Green
     if (seg >= 22 && seg <= 24) return '#238b45';    // Dark Green
     return '#bdbdbd';                                // Grey fallback
-  }
+  };
 
-  // Load the GeoJSON file
+  // --- Load GeoJSON and create layer ---
   fetch('Hull_OAs.geojson')
     .then(res => res.json())
     .then(data => {
@@ -52,31 +56,34 @@
             color: '#444',
             weight: 0.4,
             fillColor: getColor(seg),
-            fillOpacity: 0.5 // 50% opacity
+            fillOpacity: 0.5  // initial opacity
           };
         },
         onEachFeature: (feature, layer) => {
           const seg = feature.properties[field] || '–';
-          layer.bindPopup(
-            `<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`
-          );
+          layer.bindPopup(`<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`);
         }
-      });
+      }).addTo(map);
 
-      // Add layer control toggle
-      const baseMaps = { "OpenStreetMap": baseLayer };
-      const overlayMaps = { "Segment Shading": segmentLayer };
+      // --- Basemap toggle control ---
+      const baseMaps = {
+        "OpenStreetMap": osm,
+        "Carto Light": cartoLight
+      };
+      const overlays = {
+        "Segment Shading": segmentLayer
+      };
 
-      L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+      L.control.layers(baseMaps, overlays, { collapsed: false }).addTo(map);
 
-      // Add the segment layer by default
-      segmentLayer.addTo(map);
-    })
-    .catch(err => {
-      console.error('Error loading GeoJSON:', err);
-      alert('Error loading map data. Please check the console for details.');
-    });
-</script>
+      // --- Opacity Slider Control ---
+      const opacityControl = L.control({ position: 'bottomleft' });
+      opacityControl.onAdd = function () {
+        const div = L.DomUtil.create('div', 'opacity-slider');
+        div.innerHTML = `
+          <label style="font-family:sans-serif;font-size:12px;">
+            Opacity: <input id="opacityRan
+
 
 
 

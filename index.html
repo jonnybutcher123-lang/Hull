@@ -9,12 +9,12 @@
   html, body { height: 100%; margin: 0; }
   #map { height: 100%; }
 
-  .opacity-slider {
-    background: rgba(255,255,255,0.9);
-    padding: 6px 10px;
-    border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
-  }
+  .opacity-slider input[type="range"] {
+  width: 150px;          /* 50% wider */
+  height: 20px;          /* slightly taller */
+  cursor: pointer;
+  vertical-align: middle;
+}
   .opacity-slider input[type="range"] {
     width: 100px;
     vertical-align: middle;
@@ -110,21 +110,34 @@
       L.control.layers(baseMaps, overlays, { collapsed: false }).addTo(map);
 
       // --- Opacity Slider ---
-      const opacityControl = L.control({ position: 'bottomleft' });
-      opacityControl.onAdd = function () {
-        const div = L.DomUtil.create('div', 'opacity-slider');
-        div.innerHTML = `
-          <label style="font-family:sans-serif;font-size:12px;">
-            Opacity: <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="1">
-          </label>
-        `;
-        return div;
-      };
-      opacityControl.addTo(map);
-      document.getElementById('opacityRange').addEventListener('input', e => {
-        const val = parseFloat(e.target.value);
-        segmentLayer.setStyle({ fillOpacity: val });
-      });
+const opacityControl = L.control({ position: 'bottomleft' });
+opacityControl.onAdd = function () {
+  const div = L.DomUtil.create('div', 'opacity-slider');
+  div.innerHTML = `
+    <label style="font-family:sans-serif;font-size:12px;">
+      Opacity:
+      <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="1">
+    </label>
+  `;
+
+  // Prevent map from hijacking drag events
+  L.DomEvent.disableClickPropagation(div);
+  L.DomEvent.disableScrollPropagation(div);
+  L.DomEvent.on(div, 'mousedown touchstart', e => {
+    e.stopPropagation();
+  });
+
+  return div;
+};
+opacityControl.addTo(map);
+
+// Enable smooth dragging interaction
+const slider = document.getElementById('opacityRange');
+slider.addEventListener('input', e => {
+  const val = parseFloat(e.target.value);
+  segmentLayer.setStyle({ fillOpacity: val });
+});
+
 
       // --- Interactive Legend (Hover for description) ---
       const legend = L.control({ position: 'bottomright' });

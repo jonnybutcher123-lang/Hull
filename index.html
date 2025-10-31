@@ -23,29 +23,28 @@
 <script>
   const map = L.map('map').setView([53.75, -0.35], 12);
 
-  // --- Base Map Layer ---
+  // Base map layer
   const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // --- Segment Colour Function ---
-  const getColor = seg => {
+  // Segment colour categories
+  function getColor(seg) {
     if (seg >= 1 && seg <= 5) return '#2b8cbe';      // Blue
-    if (seg >= 6 && seg <= 10) return '#9467bd';     // Mauve / Purple
+    if (seg >= 6 && seg <= 10) return '#9467bd';     // Purple
     if (seg >= 11 && seg <= 14) return '#de2d26';    // Red
     if (seg >= 15 && seg <= 16) return '#fdae6b';    // Orange
-    if (seg >= 17 && seg <= 21) return '#ffffb2';    // Yellow / Light Green
+    if (seg >= 17 && seg <= 21) return '#ffffb2';    // Yellow/Light Green
     if (seg >= 22 && seg <= 24) return '#238b45';    // Dark Green
-    return '#bdbdbd';                                // Grey fallback (25–26)
-  };
+    return '#bdbdbd';                                // Grey fallback
+  }
 
-  // --- Load the GeoJSON ---
+  // Load the GeoJSON file
   fetch('Hull_OAs.geojson')
     .then(res => res.json())
     .then(data => {
       const field = "Segments 1-26.xlsx - Sheet 1_segment";
 
-      // Create the coloured polygon layer
       const segmentLayer = L.geoJSON(data, {
         style: feature => {
           const seg = parseInt(feature.properties[field]);
@@ -53,7 +52,7 @@
             color: '#444',
             weight: 0.4,
             fillColor: getColor(seg),
-            fillOpacity: 0.5   // 🔹 50% opacity
+            fillOpacity: 0.5 // 50% opacity
           };
         },
         onEachFeature: (feature, layer) => {
@@ -64,16 +63,21 @@
         }
       });
 
-      // Add the toggle control
+      // Add layer control toggle
       const baseMaps = { "OpenStreetMap": baseLayer };
       const overlayMaps = { "Segment Shading": segmentLayer };
 
       L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
-      // Add segment layer by default
+      // Add the segment layer by default
       segmentLayer.addTo(map);
+    })
+    .catch(err => {
+      console.error('Error loading GeoJSON:', err);
+      alert('Error loading map data. Please check the console for details.');
     });
-</scr
+</script>
+
 
 
 

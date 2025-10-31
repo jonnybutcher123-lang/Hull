@@ -6,222 +6,196 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
-  html, body { height: 100%; margin: 0; }
-  #map { height: 100%; }
+    html, body { height: 100%; margin: 0; }
+    #map { height: 100%; }
 
-  .opacity-slider input[type="range"] {
-  width: 150px;          /* 50% wider */
-  height: 20px;          /* slightly taller */
-  cursor: pointer;
-  vertical-align: middle;
-}
-  .opacity-slider input[type="range"] {
-    width: 100px;
-    vertical-align: middle;
-  }
-  .legend {
-    background: rgba(255,255,255,0.95);
-    padding: 8px 10px;
-    border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
-    font-family: sans-serif;
-    font-size: 12px;
-    line-height: 1.4em;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    margin: 2px 0;
-    cursor: help;
-  }
-  .legend-color {
-    width: 14px;
-    height: 14px;
-    margin-right: 6px;
-    border: 1px solid #999;
-    border-radius: 3px;
-  }
-  .legend-tooltip {
-    position: absolute;
-    background: rgba(50,50,50,0.9);
-    color: #fff;
-    padding: 6px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-family: sans-serif;
-    pointer-events: none;
-    max-width: 250px;
-    z-index: 10000;
-  }
-</style>
-
+    .opacity-slider {
+      background: rgba(255,255,255,0.9);
+      padding: 6px 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    .opacity-slider input[type="range"] {
+      width: 150px;     /* 50% wider */
+      height: 20px;     /* slightly taller */
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    .legend {
+      background: rgba(255,255,255,0.95);
+      padding: 8px 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+      font-size: 12px;
+      line-height: 1.4em;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 2px 0;
+      cursor: help;
+    }
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+      border: 1px solid #999;
+      border-radius: 3px;
+    }
+    .legend-tooltip {
+      position: absolute;
+      background: rgba(50,50,50,0.9);
+      color: #fff;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: sans-serif;
+      pointer-events: none;
+      max-width: 250px;
+      z-index: 10000;
+    }
+  </style>
 </head>
 <body>
   <div id="map"></div>
 
-<script>
-  const map = L.map('map').setView([53.75, -0.35], 12);
-
-  // --- Base maps ---
- const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-});
-
-const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-});
-
-const esriTopo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles © Esri — Source: Esri, DeLorme, NAVTEQ, USGS, and others'
-});
-
-// set default
-const map = L.map('map', {
-  center: [53.75, -0.35],
-  zoom: 12,
-  layers: [cartoLight] // default visible basemap
-});
-
-// basemap toggle control
-const baseMaps = {
-  "Carto Light": cartoLight,
-  "OpenStreetMap": osm,
-  "Esri Topo": esriTopo
-};
-
-L.control.layers(baseMaps, null, { collapsed: false, position: 'topright' }).addTo(map);
-
-
-  // --- Segment Colour Function ---
-  const getColor = seg => {
-    if (seg >= 1 && seg <= 5) return '#2b8cbe';      // Blue
-    if (seg >= 6 && seg <= 10) return '#9467bd';     // Mauve / Purple
-    if (seg >= 11 && seg <= 14) return '#de2d26';    // Red
-    if (seg >= 15 && seg <= 16) return '#fdae6b';    // Orange
-    if (seg >= 17 && seg <= 21) return '#ffffb2';    // Yellow / Light Green
-    if (seg >= 22 && seg <= 24) return '#238b45';    // Dark Green
-    return '#bdbdbd';                                // Grey fallback
-  };
-
-  // --- Load GeoJSON and create layer ---
-  fetch('Hull_OAs.geojson')
-    .then(res => res.json())
-    .then(data => {
-      const field = "Segments 1-26.xlsx - Sheet 1_segment";
-
-      const segmentLayer = L.geoJSON(data, {
-        style: feature => {
-          const seg = parseInt(feature.properties[field]);
-          return {
-            color: '#444',
-            weight: 0.4,
-            fillColor: getColor(seg),
-            fillOpacity: 1.0   // 100% opacity when loaded
-          };
-        },
-        onEachFeature: (feature, layer) => {
-          const seg = feature.properties[field] || '–';
-          layer.bindPopup(`<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`);
-        }
-      }).addTo(map);
-
-      // --- Layer control (basemaps + toggle) ---
-      const baseMaps = { "OpenStreetMap": osm, "Carto Light": cartoLight };
-      const overlays = { "Segment Shading": segmentLayer };
-      L.control.layers(baseMaps, overlays, { collapsed: false }).addTo(map);
-
-      // --- Opacity Slider ---
-const opacityControl = L.control({ position: 'bottomleft' });
-opacityControl.onAdd = function () {
-  const div = L.DomUtil.create('div', 'opacity-slider');
-  div.innerHTML = `
-    <label style="font-family:sans-serif;font-size:12px;">
-      Opacity:
-      <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="1">
-    </label>
-  `;
-
-  // Prevent map from hijacking drag events
-  L.DomEvent.disableClickPropagation(div);
-  L.DomEvent.disableScrollPropagation(div);
-  L.DomEvent.on(div, 'mousedown touchstart', e => {
-    e.stopPropagation();
-  });
-
-  return div;
-};
-opacityControl.addTo(map);
-
-// Enable smooth dragging interaction
-const slider = document.getElementById('opacityRange');
-slider.addEventListener('input', e => {
-  const val = parseFloat(e.target.value);
-  segmentLayer.setStyle({ fillOpacity: val });
-});
-
-
-      // --- Interactive Legend (Hover for description) ---
-      const legend = L.control({ position: 'bottomright' });
-      legend.onAdd = function () {
-        const div = L.DomUtil.create('div', 'legend');
-        const groups = [
-          { color: '#2b8cbe', label: '1–5 Blue', desc: 'Economically secure, culturally/politically conservative (Conservative core)' },
-          { color: '#9467bd', label: '6–10 Purple', desc: 'Economically insecure, very conservative, strongly pro-Brexit (Reform-heavy)' },
-          { color: '#de2d26', label: '11–14 Red', desc: 'Core Labour working-class, high benefit uptake, demand for protection at work' },
-          { color: '#fdae6b', label: '15–16 Orange', desc: 'Economically insecure but diverse, higher proportion of BAME residents' },
-          { color: '#ffffb2', label: '17–21 Yellow/Light Green', desc: 'Socially liberal, Remain-leaning, Guardian/Independent readers' },
-          { color: '#238b45', label: '22–24 Dark Green', desc: 'Socially liberal and economically secure (Blair/Cameron/2024 Labour voters)' },
-          { color: '#bdbdbd', label: '25–26 Grey', desc: 'Unclassified or mixed demographic profile' }
-        ];
-
-        div.innerHTML = '<b>Segment Key</b><br>';
-        groups.forEach(g => {
-          div.innerHTML += `
-            <div class="legend-item" data-desc="${g.desc}">
-              <span class="legend-color" style="background:${g.color}"></span>
-              ${g.label}
-            </div>
-          `;
-        });
-
-        return div;
-      };
-      legend.addTo(map);
-
-      // --- Tooltip for legend hover ---
-      const tooltip = L.DomUtil.create('div', 'legend-tooltip', map.getContainer());
-      tooltip.style.display = 'none';
-
-      document.addEventListener('mousemove', e => {
-        tooltip.style.left = e.pageX + 15 + 'px';
-        tooltip.style.top = e.pageY + 15 + 'px';
-      });
-
-      document.querySelectorAll('.legend-item').forEach(item => {
-        item.addEventListener('mouseenter', () => {
-          tooltip.innerHTML = item.getAttribute('data-desc');
-          tooltip.style.display = 'block';
-        });
-        item.addEventListener('mouseleave', () => {
-          tooltip.style.display = 'none';
-        });
-      });
-    })
-    .catch(err => {
-      console.error('Error loading GeoJSON:', err);
-      alert('Error loading map data. Please check the console for details.');
+  <script>
+    // --- Base maps ---
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
     });
-</script>
 
+    const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    });
 
+    const esriTopo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri — Source: Esri, DeLorme, NAVTEQ, USGS, and others'
+    });
 
+    // --- Create Map ---
+    const map = L.map('map', {
+      center: [53.75, -0.35],
+      zoom: 12,
+      layers: [cartoLight] // default visible basemap
+    });
 
+    // --- Basemap control ---
+    const baseMaps = {
+      "Carto Light": cartoLight,
+      "OpenStreetMap": osm,
+      "Esri Topo": esriTopo
+    };
+    L.control.layers(baseMaps, null, { collapsed: false, position: 'topright' }).addTo(map);
 
+    // --- Segment Colour Function ---
+    const getColor = seg => {
+      if (seg >= 1 && seg <= 5) return '#2b8cbe';      // Blue
+      if (seg >= 6 && seg <= 10) return '#9467bd';     // Mauve / Purple
+      if (seg >= 11 && seg <= 14) return '#de2d26';    // Red
+      if (seg >= 15 && seg <= 16) return '#fdae6b';    // Orange
+      if (seg >= 17 && seg <= 21) return '#ffffb2';    // Yellow / Light Green
+      if (seg >= 22 && seg <= 24) return '#238b45';    // Dark Green
+      return '#bdbdbd';                                // Grey fallback
+    };
 
+    // --- Load GeoJSON ---
+    fetch('Hull_OAs.geojson')
+      .then(res => res.json())
+      .then(data => {
+        const field = "Segments 1-26.xlsx - Sheet 1_segment";
 
+        const segmentLayer = L.geoJSON(data, {
+          style: feature => {
+            const seg = parseInt(feature.properties[field]);
+            return {
+              color: '#444',
+              weight: 0.4,
+              fillColor: getColor(seg),
+              fillOpacity: 1.0   // 100% opacity at load
+            };
+          },
+          onEachFeature: (feature, layer) => {
+            const seg = feature.properties[field] || '–';
+            layer.bindPopup(`<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`);
+          }
+        }).addTo(map);
 
+        // --- Overlays toggle ---
+        const overlays = { "Segment Shading": segmentLayer };
+        L.control.layers(null, overlays, { collapsed: false, position: 'topright' }).addTo(map);
 
+        // --- Opacity Slider ---
+        const opacityControl = L.control({ position: 'bottomleft' });
+        opacityControl.onAdd = function () {
+          const div = L.DomUtil.create('div', 'opacity-slider');
+          div.innerHTML = `
+            <label style="font-family:sans-serif;font-size:12px;">
+              Opacity:
+              <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="1">
+            </label>
+          `;
+          L.DomEvent.disableClickPropagation(div);
+          L.DomEvent.disableScrollPropagation(div);
+          L.DomEvent.on(div, 'mousedown touchstart', e => e.stopPropagation());
+          return div;
+        };
+        opacityControl.addTo(map);
 
+        const slider = document.getElementById('opacityRange');
+        slider.addEventListener('input', e => {
+          const val = parseFloat(e.target.value);
+          segmentLayer.setStyle({ fillOpacity: val });
+        });
 
+        // --- Interactive Legend ---
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+          const div = L.DomUtil.create('div', 'legend');
+          const groups = [
+            { color: '#2b8cbe', label: '1–5 Blue', desc: 'Economically secure, culturally/politically conservative (Conservative core)' },
+            { color: '#9467bd', label: '6–10 Purple', desc: 'Economically insecure, very conservative, strongly pro-Brexit (Reform-heavy)' },
+            { color: '#de2d26', label: '11–14 Red', desc: 'Core Labour working-class, high benefit uptake, demand for protection at work' },
+            { color: '#fdae6b', label: '15–16 Orange', desc: 'Economically insecure but diverse, higher proportion of BAME residents' },
+            { color: '#ffffb2', label: '17–21 Yellow/Light Green', desc: 'Socially liberal, Remain-leaning, Guardian/Independent readers' },
+            { color: '#238b45', label: '22–24 Dark Green', desc: 'Socially liberal and economically secure (Blair/Cameron/2024 Labour voters)' },
+            { color: '#bdbdbd', label: '25–26 Grey', desc: 'Unclassified or mixed demographic profile' }
+          ];
+          div.innerHTML = '<b>Segment Key</b><br>';
+          groups.forEach(g => {
+            div.innerHTML += `
+              <div class="legend-item" data-desc="${g.desc}">
+                <span class="legend-color" style="background:${g.color}"></span>
+                ${g.label}
+              </div>
+            `;
+          });
+          return div;
+        };
+        legend.addTo(map);
+
+        // --- Legend Hover Tooltip ---
+        const tooltip = L.DomUtil.create('div', 'legend-tooltip', map.getContainer());
+        tooltip.style.display = 'none';
+        document.addEventListener('mousemove', e => {
+          tooltip.style.left = e.pageX + 15 + 'px';
+          tooltip.style.top = e.pageY + 15 + 'px';
+        });
+        document.querySelectorAll('.legend-item').forEach(item => {
+          item.addEventListener('mouseenter', () => {
+            tooltip.innerHTML = item.getAttribute('data-desc');
+            tooltip.style.display = 'block';
+          });
+          item.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+          });
+        });
+      })
+      .catch(err => {
+        console.error('Error loading GeoJSON:', err);
+        alert('Error loading map data. Please check the console for details.');
+      });
+  </script>
 </body>
 </html>

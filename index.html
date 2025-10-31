@@ -82,7 +82,26 @@
         const div = L.DomUtil.create('div', 'opacity-slider');
         div.innerHTML = `
           <label style="font-family:sans-serif;font-size:12px;">
-            Opacity: <input id="opacityRan
+            Opacity: <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="0.5">
+          </label>
+        `;
+        return div;
+      };
+      opacityControl.addTo(map);
+
+      // --- Handle slider interaction ---
+      const slider = document.getElementById('opacityRange');
+      slider.addEventListener('input', e => {
+        const val = parseFloat(e.target.value);
+        segmentLayer.setStyle({ fillOpacity: val });
+      });
+    })
+    .catch(err => {
+      console.error('Error loading GeoJSON:', err);
+      alert('Error loading map data. Please check the console for details.');
+    });
+</script>
+
 
 
 

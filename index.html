@@ -27,15 +27,16 @@
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const palette = [
-    '#edf8fb', '#b2e2e2', '#66c2a4', '#2ca25f', '#006d2c',
-    '#f7fcf5', '#e5f5e0', '#c7e9c0', '#a1d99b', '#74c476',
-    '#31a354', '#006d2c', '#fff7ec', '#fee8c8', '#fdd49e',
-    '#fdbb84', '#fc8d59', '#ef6548', '#d7301f', '#990000',
-    '#d0d1e6', '#a6bddb', '#74a9cf', '#2b8cbe', '#045a8d', '#023858'
-  ];
-
-  const getColor = seg => palette[(parseInt(seg) - 1) % palette.length];
+  // Function to map segment numbers to political colour categories
+  const getColor = seg => {
+    if (seg >= 1 && seg <= 5) return '#2b8cbe';      // Blue
+    if (seg >= 6 && seg <= 10) return '#9467bd';     // Mauve / Purple
+    if (seg >= 11 && seg <= 14) return '#de2d26';    // Red
+    if (seg >= 15 && seg <= 16) return '#fdae6b';    // Orange
+    if (seg >= 17 && seg <= 21) return '#ffffb2';    // Yellow / Light Green
+    if (seg >= 22 && seg <= 24) return '#238b45';    // Dark Green
+    return '#bdbdbd';                                // Grey fallback (25–26)
+  };
 
   fetch('Hull_OAs.geojson')
     .then(res => res.json())
@@ -44,12 +45,12 @@
 
       L.geoJSON(data, {
         style: feature => {
-          const seg = feature.properties[field];
+          const seg = parseInt(feature.properties[field]);
           return {
             color: '#444',
-            weight: 0.5,
-            fillColor: getColor(seg || 1),
-            fillOpacity: 0.8
+            weight: 0.4,
+            fillColor: getColor(seg),
+            fillOpacity: 0.85
           };
         },
         onEachFeature: (feature, layer) => {
@@ -61,6 +62,7 @@
       }).addTo(map);
     });
 </script>
+
 
 
 

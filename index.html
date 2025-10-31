@@ -25,6 +25,41 @@
   width: 100px;
   vertical-align: middle;
 }
+.opacity-slider {
+  background: rgba(255,255,255,0.9);
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+.opacity-slider input[type="range"] {
+  width: 100px;
+  vertical-align: middle;
+}
+.legend {
+  background: rgba(255,255,255,0.95);
+  padding: 8px 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  font-family: sans-serif;
+  font-size: 12px;
+  line-height: 1.4em;
+  cursor: default;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin: 2px 0;
+}
+.legend-color {
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border: 1px solid #999;
+  border-radius: 3px;
+}
+.legend-item:hover {
+  background: rgba(0,0,0,0.05);
+}
 </style>
 </head>
 <body>
@@ -45,10 +80,10 @@
   // --- Segment Colour Function ---
   const getColor = seg => {
     if (seg >= 1 && seg <= 5) return '#2b8cbe';      // Blue
-    if (seg >= 6 && seg <= 10) return '#9467bd';     // Purple
+    if (seg >= 6 && seg <= 10) return '#9467bd';     // Mauve / Purple
     if (seg >= 11 && seg <= 14) return '#de2d26';    // Red
     if (seg >= 15 && seg <= 16) return '#fdae6b';    // Orange
-    if (seg >= 17 && seg <= 21) return '#ffffb2';    // Yellow/Light Green
+    if (seg >= 17 && seg <= 21) return '#ffffb2';    // Yellow / Light Green
     if (seg >= 22 && seg <= 24) return '#238b45';    // Dark Green
     return '#bdbdbd';                                // Grey fallback
   };
@@ -66,7 +101,7 @@
             color: '#444',
             weight: 0.4,
             fillColor: getColor(seg),
-            fillOpacity: 0.5  // initial opacity
+            fillOpacity: 0.5
           };
         },
         onEachFeature: (feature, layer) => {
@@ -75,18 +110,12 @@
         }
       }).addTo(map);
 
-      // --- Basemap toggle control ---
-      const baseMaps = {
-        "OpenStreetMap": osm,
-        "Carto Light": cartoLight
-      };
-      const overlays = {
-        "Segment Shading": segmentLayer
-      };
-
+      // --- Layer control (basemaps + toggle) ---
+      const baseMaps = { "OpenStreetMap": osm, "Carto Light": cartoLight };
+      const overlays = { "Segment Shading": segmentLayer };
       L.control.layers(baseMaps, overlays, { collapsed: false }).addTo(map);
 
-      // --- Opacity Slider Control ---
+      // --- Opacity Slider ---
       const opacityControl = L.control({ position: 'bottomleft' });
       opacityControl.onAdd = function () {
         const div = L.DomUtil.create('div', 'opacity-slider');
@@ -98,19 +127,43 @@
         return div;
       };
       opacityControl.addTo(map);
-
-      // --- Handle slider interaction ---
-      const slider = document.getElementById('opacityRange');
-      slider.addEventListener('input', e => {
+      document.getElementById('opacityRange').addEventListener('input', e => {
         const val = parseFloat(e.target.value);
         segmentLayer.setStyle({ fillOpacity: val });
       });
+
+      // --- Hover Legend (Key) ---
+      const legend = L.control({ position: 'bottomright' });
+      legend.onAdd = function () {
+        const div = L.DomUtil.create('div', 'legend');
+        const groups = [
+          { color: '#2b8cbe', label: '1–5 Blue', desc: 'Economically secure, culturally conservative (Conservative core)' },
+          { color: '#9467bd', label: '6–10 Purple', desc: 'Economically insecure, very conservative, pro-Brexit (Reform-heavy)' },
+          { color: '#de2d26', label: '11–14 Red', desc: 'Core Labour working-class, economically insecure' },
+          { color: '#fdae6b', label: '15–16 Orange', desc: 'Economically insecure but diverse (more BAME)' },
+          { color: '#ffffb2', label: '17–21 Yellow/Light Green', desc: 'Socially liberal, Remain-leaning, Guardian readers' },
+          { color: '#238b45', label: '22–24 Dark Green', desc: 'Socially liberal, economically secure (Blair/Cameron voters)' },
+          { color: '#bdbdbd', label: '25–26 Grey', desc: 'Unclassified or mixed profile' }
+        ];
+        div.innerHTML = '<b>Segment Key</b><br>';
+        groups.forEach(g => {
+          div.innerHTML += `
+            <div class="legend-item" title="${g.desc}">
+              <span class="legend-color" style="background:${g.color}"></span>
+              ${g.label}
+            </div>
+          `;
+        });
+        return div;
+      };
+      legend.addTo(map);
     })
     .catch(err => {
       console.error('Error loading GeoJSON:', err);
       alert('Error loading map data. Please check the console for details.');
     });
 </script>
+
 
 
 

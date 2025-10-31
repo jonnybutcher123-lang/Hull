@@ -23,11 +23,12 @@
 <script>
   const map = L.map('map').setView([53.75, -0.35], 12);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // --- Base Map Layer ---
+  const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Colour mapping by segment groups
+  // --- Segment Colour Function ---
   const getColor = seg => {
     if (seg >= 1 && seg <= 5) return '#2b8cbe';      // Blue
     if (seg >= 6 && seg <= 10) return '#9467bd';     // Mauve / Purple
@@ -38,19 +39,21 @@
     return '#bdbdbd';                                // Grey fallback (25–26)
   };
 
+  // --- Load the GeoJSON ---
   fetch('Hull_OAs.geojson')
     .then(res => res.json())
     .then(data => {
       const field = "Segments 1-26.xlsx - Sheet 1_segment";
 
-      L.geoJSON(data, {
+      // Create the coloured polygon layer
+      const segmentLayer = L.geoJSON(data, {
         style: feature => {
           const seg = parseInt(feature.properties[field]);
           return {
             color: '#444',
             weight: 0.4,
             fillColor: getColor(seg),
-            fillOpacity: 0.3   // 30% opacity
+            fillOpacity: 0.5   // 🔹 50% opacity
           };
         },
         onEachFeature: (feature, layer) => {
@@ -59,9 +62,19 @@
             `<b>OA:</b> ${feature.properties.OA21CD}<br><b>Segment:</b> ${seg}`
           );
         }
-      }).addTo(map);
+      });
+
+      // Add the toggle control
+      const baseMaps = { "OpenStreetMap": baseLayer };
+      const overlayMaps = { "Segment Shading": segmentLayer };
+
+      L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+
+      // Add segment layer by default
+      segmentLayer.addTo(map);
     });
-</script>
+</scr
+
 
 
 
